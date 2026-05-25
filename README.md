@@ -222,4 +222,4 @@ time-boxed performance/benchmark tests for long documents.
 
 ## License
 
-MIT (or your preferred license — update before publishing).
+MIT 
