@@ -48,8 +48,11 @@ public final class ActiveTextLabel: UILabel {
     private var typeHandlers: [String: (ActiveTextElement) -> Void] = [:]
     /// Catch-all tap callback.
     private var anyHandler: ((ActiveTextElement) -> Void)?
-    /// Long-press context-menu builder.
+    /// Long-press context-menu builder (array form, from `.contextMenu`).
     private var contextMenuProvider: ((ActiveTextElement) -> [ActiveTextMenuAction])?
+    /// Long-press context-menu builder (DSL form, from `.contextMenuActions`).
+    /// Takes precedence over `contextMenuProvider` when both are set.
+    private var menuItemsProvider: ((ActiveTextElement) -> [ActiveTextMenuItem])?
     /// Long-press context-menu preview mode.
     private var previewMode: ActiveTextMenuPreview = .none
 
@@ -135,12 +138,22 @@ public final class ActiveTextLabel: UILabel {
         return self
     }
 
-    /// Installs a long-press context-menu builder.
+    /// Installs a long-press context-menu builder (array form).
     @discardableResult
     public func contextMenu(
         _ provider: @escaping (ActiveTextElement) -> [ActiveTextMenuAction]
     ) -> Self {
         contextMenuProvider = provider
+        refreshContextMenuInteraction()
+        return self
+    }
+
+    /// Installs a long-press context-menu builder (declarative DSL form).
+    @discardableResult
+    public func contextMenuActions(
+        @ActiveTextMenuBuilder _ items: @escaping (ActiveTextElement) -> [ActiveTextMenuItem]
+    ) -> Self {
+        menuItemsProvider = items
         refreshContextMenuInteraction()
         return self
     }
@@ -153,12 +166,14 @@ public final class ActiveTextLabel: UILabel {
         typeHandlers: [String: (ActiveTextElement) -> Void],
         anyHandler: ((ActiveTextElement) -> Void)?,
         contextMenuProvider: ((ActiveTextElement) -> [ActiveTextMenuAction])?,
+        menuItemsProvider: ((ActiveTextElement) -> [ActiveTextMenuItem])?,
         contextMenuPreview: ActiveTextMenuPreview,
         autoOpenLinks: Bool
     ) {
         self.typeHandlers = typeHandlers
         self.anyHandler = anyHandler
         self.contextMenuProvider = contextMenuProvider
+        self.menuItemsProvider = menuItemsProvider
         self.previewMode = contextMenuPreview
         self.autoOpenLinks = autoOpenLinks
         refreshContextMenuInteraction()
@@ -302,7 +317,7 @@ public final class ActiveTextLabel: UILabel {
     private func refreshContextMenuInteraction() {
         // A context-menu interaction is needed if there are actions *or* a
         // preview to show.
-        let needed = contextMenuProvider != nil || previewMode.isActive
+        let needed = contextMenuProvider != nil || menuItemsProvider != nil || previewMode.isActive
         if needed, menuInteraction == nil {
             let interaction = UIContextMenuInteraction(delegate: self)
             addInteraction(interaction)
@@ -386,13 +401,14 @@ extension ActiveTextLabel: UIContextMenuInteractionDelegate {
             // Only present a menu when the long-press lands on an element.
             guard let (element, range) = element(at: location) else { return nil }
             // …and only if there's something to show (actions and/or a preview).
-            guard contextMenuProvider != nil || previewMode.isActive else { return nil }
+            guard contextMenuProvider != nil || menuItemsProvider != nil || previewMode.isActive else { return nil }
 
             menuElement = element
             menuRange = range
 
             let captured = element
             let provider = contextMenuProvider
+            let itemsProvider = menuItemsProvider
 
             // Build the floating preview (above the menu), if any. The closures
             // capture only value types (the element, its resolved style, the
@@ -439,9 +455,15 @@ extension ActiveTextLabel: UIContextMenuInteractionDelegate {
                 identifier: nil,
                 previewProvider: previewProvider
             ) { _ in
-                guard let provider else { return UIMenu(children: []) }
-                let actions = provider(captured).map { $0.makeUIAction() }
-                return UIMenu(children: actions)
+                // The DSL builder (`.contextMenuActions`) wins over the array
+                // form (`.contextMenu`) when both are present.
+                if let itemsProvider {
+                    return UIMenu(children: ActiveTextMenuItem.makeUIMenuElements(itemsProvider(captured)))
+                }
+                if let provider {
+                    return UIMenu(children: provider(captured).map { $0.makeUIAction() })
+                }
+                return UIMenu(children: [])
             }
         }
     }

@@ -162,7 +162,8 @@ extension ActiveText {
         var copy = self; copy.autoOpenLinks = enabled; return copy
     }
 
-    /// Adds a long-press context menu to interactive elements.
+    /// Adds a long-press context menu to interactive elements, supplied as an
+    /// array of ``ActiveTextMenuAction``.
     ///
     /// Selecting this modifier forces the UIKit rendering backend (the SwiftUI
     /// backend has no per-run long-press menu).
@@ -170,6 +171,87 @@ extension ActiveText {
         _ provider: @escaping (ActiveTextElement) -> [ActiveTextMenuAction]
     ) -> ActiveText {
         var copy = self; copy.contextMenuProvider = provider; return copy
+    }
+
+    /// Adds a long-press context menu using a **declarative, SwiftUI-style
+    /// builder** of buttons, dividers and sub-menus — the same word-only lift
+    /// and preview behaviour as ``contextMenu(_:)``, just nicer to write.
+    ///
+    /// ```swift
+    /// ActiveText(message)
+    ///     .contextMenuPreview()                         // works with default…
+    ///     .contextMenuActions { element in
+    ///         .button("Open", systemImage: "arrow.up.forward.app") { open(element.value) }
+    ///         .button("Delete", systemImage: "trash", role: .destructive) { delete() }
+    ///         .divider
+    ///         .submenu("Share", systemImage: "square.and.arrow.up") {
+    ///             .copy(element.value)
+    ///             .share(element.value)
+    ///         }
+    ///     }
+    /// ```
+    ///
+    /// Use `if` / `switch` / `for` inside the builder just like a `ViewBuilder`.
+    /// If both this and ``contextMenu(_:)`` are set, this one wins. Selecting
+    /// this modifier forces the UIKit rendering backend.
+    ///
+    /// > Note: This is a result-builder DSL rather than literal SwiftUI
+    /// > `Button`/`Divider` because UIKit's context-menu interaction only accepts
+    /// > `UIMenuElement`s — there is no public SwiftUI `Button` → `UIMenu` bridge.
+    public func contextMenuActions(
+        @ActiveTextMenuBuilder _ items: @escaping (ActiveTextElement) -> [ActiveTextMenuItem]
+    ) -> ActiveText {
+        var copy = self; copy.contextMenuItemsProvider = items; return copy
+    }
+
+    /// Attaches a **SwiftUI-native** long-press context menu built from real
+    /// SwiftUI views — `Button`, `Divider`, nested `Menu`, and your own reusable
+    /// button components. This is the SwiftUI-backend counterpart to the UIKit
+    /// `.contextMenuActions` DSL.
+    ///
+    /// ```swift
+    /// ActiveText(message)
+    ///     .menuItems {
+    ///         Button { copyAll() } label: { Label("Copy", systemImage: "doc.on.doc") }
+    ///         Divider()
+    ///         MyReportButton()                 // any reusable SwiftUI view
+    ///     }
+    /// ```
+    ///
+    /// Because SwiftUI cannot scope a context menu to a sub-range of flowing
+    /// `Text`, this menu applies to the **whole** text view (a long-press
+    /// anywhere on it) and the builder does not receive a specific element. For
+    /// a per-element menu with the word-only lift, use ``contextMenuActions(_:)``
+    /// (UIKit backend). Avoid combining `.menuItems` with the UIKit menu
+    /// modifiers on the same view.
+    public func menuItems<Content: View>(
+        @ViewBuilder _ content: @escaping () -> Content
+    ) -> ActiveText {
+        var copy = self
+        copy.swiftUIMenuContent = { AnyView(content()) }
+        return copy
+    }
+
+    /// SwiftUI-native context menu with a custom SwiftUI preview shown above it.
+    ///
+    /// ```swift
+    /// ActiveText(message)
+    ///     .menuItems {
+    ///         Button("Open") { open() }
+    ///         Divider()
+    ///         Button("Share") { share() }
+    ///     } preview: {
+    ///         MyPreviewCard()
+    ///     }
+    /// ```
+    public func menuItems<Content: View, Preview: View>(
+        @ViewBuilder _ content: @escaping () -> Content,
+        @ViewBuilder preview: @escaping () -> Preview
+    ) -> ActiveText {
+        var copy = self
+        copy.swiftUIMenuContent = { AnyView(content()) }
+        copy.swiftUIMenuPreview = { AnyView(preview()) }
+        return copy
     }
 
     /// Shows the built-in **default preview** above the long-press context menu:

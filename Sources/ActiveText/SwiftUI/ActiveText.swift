@@ -101,11 +101,24 @@ public struct ActiveText: View {
     /// Multi-line alignment.
     var alignment: TextAlignment = .leading
 
-    /// Builder for the long-press context menu (UIKit backend only).
+    /// Builder for the long-press context menu, array form (UIKit backend only).
     var contextMenuProvider: ((ActiveTextElement) -> [ActiveTextMenuAction])?
+
+    /// Builder for the long-press context menu, declarative DSL form
+    /// (`.contextMenuActions`). Takes precedence over `contextMenuProvider`.
+    var contextMenuItemsProvider: ((ActiveTextElement) -> [ActiveTextMenuItem])?
 
     /// Preview shown above the long-press context menu (UIKit backend only).
     var contextMenuPreviewMode: ActiveTextMenuPreview = .none
+
+    /// SwiftUI-native context-menu content — a `@ViewBuilder` of real SwiftUI
+    /// views (`Button`, `Divider`, your own reusable components). Applied on the
+    /// SwiftUI backend via ``menuItems(_:)``. This is the "SwiftUI uses SwiftUI
+    /// views" path; the UIKit backend uses the `.contextMenuActions` DSL instead.
+    var swiftUIMenuContent: (() -> AnyView)?
+
+    /// Optional SwiftUI-native context-menu preview view.
+    var swiftUIMenuPreview: (() -> AnyView)?
 
     // MARK: Environment
 
@@ -201,7 +214,10 @@ extension ActiveText {
         case .uiKit:   return .uiKit
         case .automatic:
             // Context menus and their previews require the UIKit backend.
-            return (contextMenuProvider != nil || contextMenuPreviewMode.isActive) ? .uiKit : .swiftUI
+            let needsMenu = contextMenuProvider != nil
+                || contextMenuItemsProvider != nil
+                || contextMenuPreviewMode.isActive
+            return needsMenu ? .uiKit : .swiftUI
         }
     }
 
@@ -252,6 +268,8 @@ extension ActiveText {
             .environment(\.openURL, OpenURLAction { url in
                 handleRoute(url, elementsByID: elementsByID)
             })
+            // SwiftUI-native long-press menu (real SwiftUI views), if supplied.
+            .modifier(SwiftUIMenuModifier(content: swiftUIMenuContent, preview: swiftUIMenuPreview))
     }
 
     /// Builds an id→element lookup for the OpenURLAction handler.
@@ -308,6 +326,30 @@ private struct OptionalForeground: ViewModifier {
     let color: Color?
     func body(content: Content) -> some View {
         if let color { content.foregroundStyle(color) } else { content }
+    }
+}
+
+/// Attaches SwiftUI's native long-press context menu built from real SwiftUI
+/// views, when `.menuItems` supplied content. No-op otherwise.
+///
+/// This is the SwiftUI-backend menu path: it applies to the whole text view
+/// (SwiftUI can't scope a context menu to a sub-range of flowing `Text`), so
+/// the menu builder does not receive a specific element. For a per-element
+/// menu with the word-only lift, use the UIKit-backed `.contextMenuActions`.
+private struct SwiftUIMenuModifier: ViewModifier {
+    let content: (() -> AnyView)?
+    let preview: (() -> AnyView)?
+
+    func body(content base: Content) -> some View {
+        if let menu = content {
+            if let preview {
+                base.contextMenu(menuItems: { menu() }, preview: { preview() })
+            } else {
+                base.contextMenu(menuItems: { menu() })
+            }
+        } else {
+            base
+        }
     }
 }
 #endif
