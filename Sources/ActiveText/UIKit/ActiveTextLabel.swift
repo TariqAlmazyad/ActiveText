@@ -397,13 +397,21 @@ extension ActiveTextLabel: UIContextMenuInteractionDelegate {
             // Build the floating preview (above the menu), if any. The closures
             // capture only value types (the element, its resolved style, the
             // builder) — never `self` — so they're safe to store and run later.
+            //
+            // Background adapts to the current color scheme: black in dark mode,
+            // white in light mode. `isDark` is captured as a value so the closure
+            // never retains `self`.
+            let isDark = traitCollection.userInterfaceStyle == .dark
+            let previewBackground: Color = isDark ? .black : .white
+
             let previewProvider: UIContextMenuContentPreviewProvider? = {
                 switch previewMode {
                 case .none:
                     return nil
 
                 case .automatic:
-                    // Default preview: just the tapped element on a material card.
+                    // Default preview: just the tapped element on a solid card
+                    // whose colour matches the active color scheme.
                     let style = theme.style(for: captured.type)
                     return {
                         let content = Text(captured.text)
@@ -411,7 +419,7 @@ extension ActiveTextLabel: UIContextMenuInteractionDelegate {
                             .foregroundStyle(style.color)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 12)
-                            .background(.ultraThinMaterial)
+                            .background(previewBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         return Self.previewController(for: content)
                     }
@@ -420,7 +428,7 @@ extension ActiveTextLabel: UIContextMenuInteractionDelegate {
                     // Caller-supplied view (any V/H/Z stack).
                     return {
                         let content = builder(captured)
-                            .background(.ultraThinMaterial)
+                            .background(previewBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                         return Self.previewController(for: content)
                     }
