@@ -37,9 +37,11 @@ struct ChatExample: View {
                 .color(ticket, .orange)
                 .renderingEngine(.uiKit)                 // pressed state + menu
                 // Only the long-pressed element lifts — not the whole bubble.
-                .contextMenuPreview()                    // built-in default preview
+                // `backdrop:` blurs the rest of the screen so focus snaps to the
+                // popped preview (use `.dim(opacity:)` for a plain darkening).
+                .contextMenuPreview(backdrop: .blur(.regular))   // built-in preview + frosted backdrop
                 // …or pass any custom view (V / H / Z stack):
-                // .contextMenuPreview { element in
+                // .contextMenuPreview(backdrop: .dim(opacity: 0.4)) { element in
                 //     VStack(alignment: .leading, spacing: 6) {
                 //         Text(element.value).font(.headline)
                 //         Text(element.type.description).foregroundStyle(.secondary)

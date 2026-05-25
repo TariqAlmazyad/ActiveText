@@ -31,6 +31,7 @@ struct ActiveTextRepresentable: UIViewRepresentable {
     let contextMenuProvider: ((ActiveTextElement) -> [ActiveTextMenuAction])?
     let contextMenuItemsProvider: ((ActiveTextElement) -> [ActiveTextMenuItem])?
     let contextMenuPreview: ActiveTextMenuPreview
+    let contextMenuPreviewBackdrop: ActiveTextPreviewBackdrop
 
     func makeUIView(context: Context) -> ActiveTextLabel {
         let label = ActiveTextLabel()
@@ -49,6 +50,7 @@ struct ActiveTextRepresentable: UIViewRepresentable {
             contextMenuProvider: contextMenuProvider,
             menuItemsProvider: contextMenuItemsProvider,
             contextMenuPreview: contextMenuPreview,
+            contextMenuPreviewBackdrop: contextMenuPreviewBackdrop,
             autoOpenLinks: autoOpenLinks
         )
         label.update(tokens: tokens, theme: theme)
@@ -87,7 +89,8 @@ extension ActiveText {
             anyHandler: interaction.anyHandler,
             contextMenuProvider: contextMenuProvider,
             contextMenuItemsProvider: contextMenuItemsProvider,
-            contextMenuPreview: contextMenuPreviewMode
+            contextMenuPreview: contextMenuPreviewMode,
+            contextMenuPreviewBackdrop: contextMenuPreviewBackdrop
         )
     }
 }
