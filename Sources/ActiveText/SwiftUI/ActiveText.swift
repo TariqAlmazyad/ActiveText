@@ -111,6 +111,11 @@ public struct ActiveText: View {
     /// Preview shown above the long-press context menu (UIKit backend only).
     var contextMenuPreviewMode: ActiveTextMenuPreview = .none
 
+    /// How the rest of the screen is treated while the preview is shown — an
+    /// extra, controllable blur/dim layered behind the popped preview. Only has
+    /// an effect when ``contextMenuPreviewMode`` is active (UIKit backend only).
+    var contextMenuPreviewBackdrop: ActiveTextPreviewBackdrop = .none
+
     /// SwiftUI-native context-menu content — a `@ViewBuilder` of real SwiftUI
     /// views (`Button`, `Divider`, your own reusable components). Applied on the
     /// SwiftUI backend via ``menuItems(_:)``. This is the "SwiftUI uses SwiftUI

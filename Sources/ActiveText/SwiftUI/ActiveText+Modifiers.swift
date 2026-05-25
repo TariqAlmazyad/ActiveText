@@ -265,9 +265,26 @@ extension ActiveText {
     ///     .contextMenu { element in [ .copy(element.value) ] }
     /// ```
     ///
+    /// Pass `backdrop:` to blur or dim the rest of the screen while the preview
+    /// is up, so focus snaps to the popped card:
+    ///
+    /// ```swift
+    /// ActiveText(post)
+    ///     .contextMenuPreview(backdrop: .blur(.regular))
+    /// ```
+    ///
     /// Selecting this modifier forces the UIKit rendering backend.
-    public func contextMenuPreview() -> ActiveText {
-        var copy = self; copy.contextMenuPreviewMode = .automatic; return copy
+    ///
+    /// - Parameter backdrop: How the content behind the preview is treated while
+    ///   it is shown. Defaults to ``ActiveTextPreviewBackdrop/none`` (iOS's own
+    ///   dimming only).
+    public func contextMenuPreview(
+        backdrop: ActiveTextPreviewBackdrop = .none
+    ) -> ActiveText {
+        var copy = self
+        copy.contextMenuPreviewMode = .automatic
+        copy.contextMenuPreviewBackdrop = backdrop
+        return copy
     }
 
     /// Shows a **custom SwiftUI view** as the preview above the long-press
@@ -288,12 +305,30 @@ extension ActiveText {
     ///     .contextMenu { element in [ .copy(element.value), .share(element.value) ] }
     /// ```
     ///
+    /// Pass `backdrop:` to blur or dim the rest of the screen while the preview
+    /// is up, so focus snaps to the popped card:
+    ///
+    /// ```swift
+    /// ActiveText(post)
+    ///     .contextMenuPreview(backdrop: .dim(opacity: 0.4)) { element in
+    ///         MyPreviewCard(element)
+    ///     }
+    /// ```
+    ///
     /// Selecting this modifier forces the UIKit rendering backend.
+    ///
+    /// - Parameters:
+    ///   - backdrop: How the content behind the preview is treated while it is
+    ///     shown. Defaults to ``ActiveTextPreviewBackdrop/none`` (iOS's own
+    ///     dimming only).
+    ///   - preview: Builds the SwiftUI preview view for the tapped element.
     public func contextMenuPreview<Preview: View>(
+        backdrop: ActiveTextPreviewBackdrop = .none,
         @ViewBuilder _ preview: @escaping (ActiveTextElement) -> Preview
     ) -> ActiveText {
         var copy = self
         copy.contextMenuPreviewMode = .custom { AnyView(preview($0)) }
+        copy.contextMenuPreviewBackdrop = backdrop
         return copy
     }
 }

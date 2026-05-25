@@ -55,6 +55,9 @@ public final class ActiveTextLabel: UILabel {
     private var menuItemsProvider: ((ActiveTextElement) -> [ActiveTextMenuItem])?
     /// Long-press context-menu preview mode.
     private var previewMode: ActiveTextMenuPreview = .none
+    /// How the screen behind the preview is treated while it is shown. Only
+    /// applied when ``previewMode`` is active.
+    private var previewBackdrop: ActiveTextPreviewBackdrop = .none
 
     // MARK: Hit-testing state
 
@@ -69,6 +72,10 @@ public final class ActiveTextLabel: UILabel {
     /// whole label). Weak — it nils out automatically once removed from the view
     /// hierarchy in `cleanupSnapshot()`.
     private weak var wordSnapshotView: UIView?
+    /// The focus backdrop (blur/dim) layered over the host window while the
+    /// preview is shown. Weak — the window retains it while installed; the ref
+    /// nils out once it is removed in ``removeBackdrop()``.
+    private weak var backdropView: UIView?
 
     // MARK: TextKit 1 stack (battle-tested hit-testing)
 
@@ -168,6 +175,7 @@ public final class ActiveTextLabel: UILabel {
         contextMenuProvider: ((ActiveTextElement) -> [ActiveTextMenuAction])?,
         menuItemsProvider: ((ActiveTextElement) -> [ActiveTextMenuItem])?,
         contextMenuPreview: ActiveTextMenuPreview,
+        contextMenuPreviewBackdrop: ActiveTextPreviewBackdrop,
         autoOpenLinks: Bool
     ) {
         self.typeHandlers = typeHandlers
@@ -175,6 +183,7 @@ public final class ActiveTextLabel: UILabel {
         self.contextMenuProvider = contextMenuProvider
         self.menuItemsProvider = menuItemsProvider
         self.previewMode = contextMenuPreview
+        self.previewBackdrop = contextMenuPreviewBackdrop
         self.autoOpenLinks = autoOpenLinks
         refreshContextMenuInteraction()
     }
@@ -387,6 +396,108 @@ public final class ActiveTextLabel: UILabel {
         host.preferredContentSize = host.sizeThatFits(in: CGSize(width: 320, height: 480))
         return host
     }
+
+    // MARK: Focus backdrop (blur / dim behind the preview)
+
+    /// Maps the library's UIKit-free ``ActiveTextBlurStyle`` to the system blur
+    /// effect, or `nil` when the current backdrop isn't a blur.
+    private func resolvedBlurEffect() -> UIBlurEffect? {
+        guard case .blur(let style) = previewBackdrop else { return nil }
+        let systemStyle: UIBlurEffect.Style
+        switch style {
+        case .ultraThin: systemStyle = .systemUltraThinMaterial
+        case .thin:      systemStyle = .systemThinMaterial
+        case .regular:   systemStyle = .systemMaterial
+        case .thick:     systemStyle = .systemThickMaterial
+        case .chrome:    systemStyle = .systemChromeMaterial
+        }
+        return UIBlurEffect(style: systemStyle)
+    }
+
+    /// Builds the backdrop view for ``previewBackdrop``, sized to `host` and
+    /// starting fully transparent so it can be faded in. Returns `nil` for
+    /// ``ActiveTextPreviewBackdrop/none``.
+    private func makeBackdropView(in host: UIView) -> UIView? {
+        switch previewBackdrop {
+        case .none:
+            return nil
+
+        case .blur:
+            // Start with no effect so assigning `effect` animates the frost in.
+            let view = UIVisualEffectView(effect: nil)
+            view.frame = host.bounds
+            view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            view.isUserInteractionEnabled = false
+            return view
+
+        case .dim(let opacity):
+            let clamped = CGFloat(min(max(opacity, 0), 1))
+            let view = UIView(frame: host.bounds)
+            view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            view.isUserInteractionEnabled = false
+            view.backgroundColor = UIColor.black.withAlphaComponent(clamped)
+            view.alpha = 0
+            return view
+        }
+    }
+
+    /// Inserts the backdrop into the host window and fades it in, coordinated
+    /// with the menu's own present animation. The backdrop sits *below* the
+    /// system's lifted preview (which is presented in a separate context-menu
+    /// window) so the popped card stays sharp while the app content recedes.
+    ///
+    /// No-op unless there's an active preview *and* a non-`none` backdrop.
+    private func presentBackdrop(using animator: (any UIContextMenuInteractionAnimating)?) {
+        guard previewMode.isActive, previewBackdrop.isActive else { return }
+        guard let host = window, let backdrop = makeBackdropView(in: host) else { return }
+
+        removeBackdrop()   // Defensive: clear any stale overlay first.
+        host.addSubview(backdrop)
+        backdropView = backdrop
+
+        let fadeIn = { [weak self] in
+            guard let self else { return }
+            if let blur = backdrop as? UIVisualEffectView {
+                blur.effect = self.resolvedBlurEffect()
+            } else {
+                backdrop.alpha = 1
+            }
+        }
+
+        if let animator {
+            animator.addAnimations(fadeIn)
+        } else {
+            UIView.animate(withDuration: 0.25, animations: fadeIn)
+        }
+    }
+
+    /// Fades the backdrop out alongside the dismiss animation, then removes it.
+    private func dismissBackdrop(using animator: (any UIContextMenuInteractionAnimating)?) {
+        guard let backdrop = backdropView else { return }
+
+        let fadeOut = {
+            if let blur = backdrop as? UIVisualEffectView {
+                blur.effect = nil
+            } else {
+                backdrop.alpha = 0
+            }
+        }
+
+        if let animator {
+            animator.addAnimations(fadeOut)
+            animator.addCompletion { [weak self] in self?.removeBackdrop() }
+        } else {
+            UIView.animate(withDuration: 0.2, animations: fadeOut) { [weak self] _ in
+                self?.removeBackdrop()
+            }
+        }
+    }
+
+    /// Removes the backdrop from the window (the weak ref then nils).
+    private func removeBackdrop() {
+        backdropView?.removeFromSuperview()
+        backdropView = nil
+    }
 }
 
 // MARK: - UIContextMenuInteractionDelegate
@@ -490,15 +601,28 @@ extension ActiveTextLabel: UIContextMenuInteractionDelegate {
         }
     }
 
-    // Implemented as a `@MainActor` method (inherited from the class) rather
+    // MARK: Focus backdrop lifecycle
+
+    // Implemented as plain `@MainActor` methods (inherited from the class) rather
     // than `nonisolated` + `assumeIsolated`: the non-Sendable `animator` is then
-    // received on the main actor, so passing it to `addCompletion` never crosses
-    // an isolation boundary (which Swift 6 flags as "sending … risks data races").
+    // received on the main actor, so passing it to `addAnimations`/`addCompletion`
+    // never crosses an isolation boundary (which Swift 6 flags as "sending …
+    // risks data races").
+
+    public func contextMenuInteraction(
+        _ interaction: UIContextMenuInteraction,
+        willDisplayMenuFor configuration: UIContextMenuConfiguration,
+        animator: (any UIContextMenuInteractionAnimating)?
+    ) {
+        presentBackdrop(using: animator)
+    }
+
     public func contextMenuInteraction(
         _ interaction: UIContextMenuInteraction,
         willEndFor configuration: UIContextMenuConfiguration,
         animator: (any UIContextMenuInteractionAnimating)?
     ) {
+        dismissBackdrop(using: animator)
         animator?.addCompletion { [weak self] in
             self?.cleanupSnapshot()
             self?.menuRange = nil
