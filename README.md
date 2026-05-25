@@ -23,6 +23,73 @@ ActiveText("Hello @mohammed check https://apple.com #swift")
 
 ---
 
+## Screenshots
+
+Captured from the demo app (`MyProjectDemo`) — each screen shows the exact code
+and its live result. Drop your captured PNGs into [`Screenshots/`](Screenshots)
+using the filenames below (see [`Screenshots/README.md`](Screenshots/README.md)).
+
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <img src="Screenshots/mentions.png" width="250" alt="Mentions"><br>
+      <sub><b>Detect mentions</b></sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="Screenshots/detect-all.png" width="250" alt="Detect everything"><br>
+      <sub><b>Detect everything</b></sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="Screenshots/tap-mention.png" width="250" alt="Tap a mention"><br>
+      <sub><b>Tap handlers</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="33%">
+      <img src="Screenshots/colors.png" width="250" alt="Colors"><br>
+      <sub><b>Per-type colors</b></sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="Screenshots/underline-highlight.png" width="250" alt="Underline & highlight"><br>
+      <sub><b>Underline &amp; highlight</b></sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="Screenshots/custom-pattern.png" width="250" alt="Custom pattern"><br>
+      <sub><b>Custom pattern</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="33%">
+      <img src="Screenshots/markdown.png" width="250" alt="Markdown links"><br>
+      <sub><b>Markdown links</b></sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="Screenshots/context-menu.png" width="250" alt="Context menu"><br>
+      <sub><b>Context menu</b></sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="Screenshots/preview-blur.png" width="250" alt="Blur backdrop"><br>
+      <sub><b>Preview + blur backdrop</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="33%">
+      <img src="Screenshots/preview-dim.png" width="250" alt="Dim backdrop"><br>
+      <sub><b>Preview + dim backdrop</b></sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="Screenshots/limit-lines.png" width="250" alt="Limit lines"><br>
+      <sub><b>Limit lines</b></sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="Screenshots/alignment.png" width="250" alt="Alignment"><br>
+      <sub><b>Alignment</b></sub>
+    </td>
+  </tr>
+</table>
+
+---
+
 ## Features
 
 - **SwiftUI-first**, with a UIKit backend and a stand-alone `ActiveTextLabel`
@@ -154,13 +221,17 @@ ActiveText(message)
     .contextMenuPreview()                                  // default preview…
     // .contextMenuPreview { el in MyCard(value: el.value) }   // …or a custom one
     .contextMenuActions { element in
-        .button("Open", systemImage: "arrow.up.forward.app") { open(element.value) }
-        .button("Delete", systemImage: "trash", role: .destructive) { delete(element) }
-        .divider
-        .submenu("Share", systemImage: "square.and.arrow.up") {
-            .copy(element.value)
-            .share(element.value)
-        }
+        [
+            .button("Open", systemImage: "arrow.up.forward.app") { open(element.value) },
+            .button("Delete", systemImage: "trash", role: .destructive) { delete(element) },
+            .divider,
+            .submenu("Share", systemImage: "square.and.arrow.up") {
+                [
+                    .copy(element.value),
+                    .share(element.value)
+                ]
+            }
+        ]
     }
 ```
 
@@ -168,6 +239,25 @@ ActiveText(message)
 > `Button`/`Divider`: UIKit's context-menu interaction only accepts
 > `UIMenuElement`s, and there's no public SwiftUI `Button` → `UIMenu` bridge.
 > The DSL gives the same declarative feel and the same word-only lift + preview.
+> Return the items as a comma-separated array (`[ ... ]`): in Swift a statement
+> that begins with `.` is parsed as a continuation of the previous line, so a
+> bare list of `.button` / `.divider` items would chain instead of stack.
+
+### Focus the preview with a backdrop
+
+`.contextMenuPreview(backdrop:)` blurs or dims the rest of the screen while the
+preview is up, so attention snaps to the lifted card:
+
+```swift
+ActiveText(message)
+    .renderingEngine(.uiKit)
+    .contextMenuPreview(backdrop: .blur(.regular))   // .ultraThin / .thin / .regular / .thick / .chrome
+    // .contextMenuPreview(backdrop: .dim(opacity: 0.5))   // or a plain darkening
+    .contextMenu { element in [ .copy(element.value) ] }
+```
+
+The default is `.none` (iOS's own subtle dimming only), so existing call sites
+are unchanged.
 
 ### Two menu paths — each platform, its own views
 
