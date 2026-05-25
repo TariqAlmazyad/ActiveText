@@ -131,6 +131,8 @@ ActiveText("Read [the docs](https://apple.com/textkit)")
 
 ## Long-press context menus (UIKit backend)
 
+Array form with `.contextMenu`:
+
 ```swift
 ActiveText(message)
     .renderingEngine(.uiKit)          // required for menus + pressed state
@@ -142,6 +144,59 @@ ActiveText(message)
         ]
     }
 ```
+
+Declarative builder form with `.contextMenuActions` — buttons, dividers and
+sub-menus, plus `if` / `switch` / `for`. Behaves identically to `.contextMenu`
+and works with both the default and custom previews:
+
+```swift
+ActiveText(message)
+    .contextMenuPreview()                                  // default preview…
+    // .contextMenuPreview { el in MyCard(value: el.value) }   // …or a custom one
+    .contextMenuActions { element in
+        .button("Open", systemImage: "arrow.up.forward.app") { open(element.value) }
+        .button("Delete", systemImage: "trash", role: .destructive) { delete(element) }
+        .divider
+        .submenu("Share", systemImage: "square.and.arrow.up") {
+            .copy(element.value)
+            .share(element.value)
+        }
+    }
+```
+
+> `.contextMenuActions` is a result-builder DSL rather than literal SwiftUI
+> `Button`/`Divider`: UIKit's context-menu interaction only accepts
+> `UIMenuElement`s, and there's no public SwiftUI `Button` → `UIMenu` bridge.
+> The DSL gives the same declarative feel and the same word-only lift + preview.
+
+### Two menu paths — each platform, its own views
+
+Because a per-element menu requires UIKit hit-testing (and UIKit menus can't
+host SwiftUI views), ActiveText offers a menu API for each backend:
+
+| Modifier              | Backend  | Content            | Scope        | Lift             |
+|-----------------------|----------|--------------------|--------------|------------------|
+| `.contextMenuActions` | UIKit    | `.button`/`.divider`/`.submenu` DSL → `UIMenu` | per element  | word-only        |
+| `.menuItems`          | SwiftUI  | real SwiftUI `Button`/`Divider`/your views     | whole text   | whole view / custom preview |
+
+SwiftUI-native menu with **real SwiftUI views** (drop in reusable button
+components):
+
+```swift
+ActiveText(message)
+    .menuItems {
+        Button { copyAll() } label: { Label("Copy", systemImage: "doc.on.doc") }
+        Divider()
+        MyReportButton()                 // any reusable SwiftUI view
+    } preview: {
+        MyPreviewCard()                  // optional custom preview
+    }
+```
+
+`.menuItems` uses SwiftUI's own `.contextMenu`, so it applies to the whole text
+view and the builder gets no specific element. Use `.contextMenuActions` when
+you need the per-link scoping and word-only lift. Don't combine the two on one
+view.
 
 ## Pure UIKit
 

@@ -29,6 +29,7 @@ struct ActiveTextRepresentable: UIViewRepresentable {
     let typeHandlers: [String: (ActiveTextElement) -> Void]
     let anyHandler: ((ActiveTextElement) -> Void)?
     let contextMenuProvider: ((ActiveTextElement) -> [ActiveTextMenuAction])?
+    let contextMenuItemsProvider: ((ActiveTextElement) -> [ActiveTextMenuItem])?
     let contextMenuPreview: ActiveTextMenuPreview
 
     func makeUIView(context: Context) -> ActiveTextLabel {
@@ -46,6 +47,7 @@ struct ActiveTextRepresentable: UIViewRepresentable {
             typeHandlers: typeHandlers,
             anyHandler: anyHandler,
             contextMenuProvider: contextMenuProvider,
+            menuItemsProvider: contextMenuItemsProvider,
             contextMenuPreview: contextMenuPreview,
             autoOpenLinks: autoOpenLinks
         )
@@ -84,6 +86,7 @@ extension ActiveText {
             typeHandlers: interaction.elementHandlers,
             anyHandler: interaction.anyHandler,
             contextMenuProvider: contextMenuProvider,
+            contextMenuItemsProvider: contextMenuItemsProvider,
             contextMenuPreview: contextMenuPreviewMode
         )
     }
