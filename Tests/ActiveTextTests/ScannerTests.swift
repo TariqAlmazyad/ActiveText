@@ -58,8 +58,13 @@ struct ScannerTests {
 
     @Test func asyncScanMatchesSyncScan() async {
         let text = "Hi @bob see https://a.com #x"
-        let sync = ActiveTextScanner.scan(text, types: ActiveTextType.defaultTypes)
-        let async = await ActiveTextScanner.scan(text, types: ActiveTextType.defaultTypes)
-        #expect(sync == async)
+        // `scan` has matching synchronous and `async` overloads. Inside this
+        // async test a bare call would resolve to the async one, so pin the
+        // synchronous overload by invoking it from a non-async closure.
+        let syncResult: [ActiveTextElement] = {
+            ActiveTextScanner.scan(text, types: ActiveTextType.defaultTypes)
+        }()
+        let asyncResult = await ActiveTextScanner.scan(text, types: ActiveTextType.defaultTypes)
+        #expect(syncResult == asyncResult)
     }
 }
