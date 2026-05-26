@@ -140,19 +140,30 @@ Long-press any detected element to get a native context menu — copy, share, or
 ### Default menu
 
 ```swift
-ActiveText(message)
-    .renderingEngine(.uiKit)        // menus need the UIKit backend
-    .contextMenuActions { element in
-        [
-            .button("Open", systemImage: "arrow.up.forward.app") { open(element.value) },
-            .divider,
-            .copy(element.value),
-            .share(element.value)
-        ]
+ ActiveText(text)
+    .detect([.mention])
+    .menuItems {
+        Button {
+            
+        } label: {
+            Text("My Action 1")
+        }
+        
+        Divider()
+        
+        Menu {
+            Button {
+                
+            } label: {
+                Text("My Action 2")
+            }
+        } label: {
+            Text("More")
+        }
     }
 ```
 
-<img src="https://github.com/user-attachments/assets/6e2dc056-f3d2-4797-9070-43cc1d69c9fa" width="900" alt="Context menu">
+<img src="https://github.com/user-attachments/assets/53ffdc21-080a-4948-84d4-e622f411c36b" width="900" alt="Context menu">
 
 ### Blur the rest of the screen
 
