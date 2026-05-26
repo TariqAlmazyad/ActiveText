@@ -6,7 +6,7 @@ so the gallery stays tidy regardless of device resolution.
 
 ## How to capture
 
-1. Run the **MyProjectDemo** app (it links this package locally).
+1. Run the **ActiveTextDemo** app (it links this package locally).
 2. Open a demo from the home list, then capture the screen:
    - Simulator: **File ▸ New Screen Shot** (⌘S), or
    - Device: press the side + volume-up buttons.
