@@ -1,5 +1,11 @@
 # ActiveText
 
+[![CI](https://github.com/TariqAlmazyad/ActiveText/actions/workflows/ci.yml/badge.svg)](https://github.com/TariqAlmazyad/ActiveText/actions/workflows/ci.yml)
+[![Swift 6](https://img.shields.io/badge/Swift-6-orange.svg?logo=swift)](https://swift.org)
+[![Platforms](https://img.shields.io/badge/Platforms-iOS%2017%2B-blue.svg)](https://developer.apple.com/ios/)
+[![Swift Package Manager](https://img.shields.io/badge/SwiftPM-compatible-brightgreen.svg)](https://swift.org/package-manager/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A modern, **SwiftUI-first** interactive text component for iOS — a near drop-in
 replacement for `Text` / `UILabel` that automatically detects and handles
 **URLs, @mentions, #hashtags, emails, phone numbers and custom patterns**.
@@ -25,7 +31,7 @@ ActiveText("Hello @mohammed check https://apple.com #swift")
 
 ## Screenshots
 
-Captured from the demo app (`MyProjectDemo`) — each screen shows the exact code
+Captured from the demo app (`ActiveTextDemo`) — each screen shows the exact code
 and its live result. Drop your captured PNGs into [`Screenshots/`](Screenshots)
 using the filenames below (see [`Screenshots/README.md`](Screenshots/README.md)).
 
@@ -119,7 +125,7 @@ add it to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/your-org/ActiveText.git", from: "1.0.0")
+    .package(url: "https://github.com/TariqAlmazyad/ActiveText.git", from: "1.0.0")
 ],
 targets: [
     .target(name: "YourApp", dependencies: ["ActiveText"])
