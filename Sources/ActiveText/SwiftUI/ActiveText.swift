@@ -68,6 +68,9 @@ public struct ActiveText: View {
     /// Per-type visual styling.
     var theme: ActiveTextTheme = .default
 
+    /// Appearance of the press-and-hold highlight (UIKit backend).
+    var pressHighlight: ActiveTextPressHighlight = .default
+
     /// User-registered custom parsers.
     var customParsers: [any ActiveTextParsing] = []
 

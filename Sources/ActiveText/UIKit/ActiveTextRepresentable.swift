@@ -22,6 +22,7 @@ struct ActiveTextRepresentable: UIViewRepresentable {
 
     let tokens: [ActiveTextToken]
     let theme: ActiveTextTheme
+    let pressHighlight: ActiveTextPressHighlight
     let baseColor: UIColor
     let baseFont: UIFont
     let lineLimit: Int?
@@ -44,6 +45,7 @@ struct ActiveTextRepresentable: UIViewRepresentable {
         label.font = baseFont
         label.textColor = baseColor
         label.numberOfLines = lineLimit ?? 0
+        label.pressHighlight = pressHighlight
         label.setHandlers(
             typeHandlers: typeHandlers,
             anyHandler: anyHandler,
@@ -78,6 +80,7 @@ extension ActiveText {
         ActiveTextRepresentable(
             tokens: tokens,
             theme: theme,
+            pressHighlight: pressHighlight,
             baseColor: baseColor.map { UIColor($0) } ?? .label,
             // Honour the caller's base font (`.font(_:)`) in the UIKit backend,
             // resolving the SwiftUI Font best-effort; fall back to body.
