@@ -63,8 +63,18 @@ struct ActiveTextRepresentable: UIViewRepresentable {
         uiView label: ActiveTextLabel,
         context: Context
     ) -> CGSize? {
-        let width = proposal.width ?? UIScreen.main.bounds.width
-        let fitting = label.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude))
+        // Use the proposed width purely as a *maximum* for wrapping; report the
+        // text's actual measured width back to SwiftUI. Returning the proposed
+        // width unchanged would make ActiveText greedily take the whole container
+        // (e.g. the full width of a VStack), which breaks centering and any
+        // layout that depends on the view hugging its content — unlike the
+        // SwiftUI `Text` backend, which reports its intrinsic size.
+        let maxWidth = proposal.width.map { $0.isFinite ? $0 : .greatestFiniteMagnitude }
+            ?? .greatestFiniteMagnitude
+        let fitting = label.sizeThatFits(
+            CGSize(width: maxWidth, height: .greatestFiniteMagnitude)
+        )
+        let width = min(ceil(fitting.width), maxWidth)
         return CGSize(width: width, height: ceil(fitting.height))
     }
 }
