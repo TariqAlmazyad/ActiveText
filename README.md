@@ -6,190 +6,88 @@
 [![Swift Package Manager](https://img.shields.io/badge/SwiftPM-compatible-brightgreen.svg)](https://swift.org/package-manager/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A modern, **SwiftUI-first** interactive text component for iOS — a near drop-in
-replacement for `Text` / `UILabel` that automatically detects and handles
-**URLs, @mentions, #hashtags, emails, phone numbers and custom patterns**.
+**A drop-in replacement for SwiftUI `Text` that makes mentions, hashtags, links, emails and phone numbers tappable — with one line.**
 
-ActiveText is a clean-architecture spiritual successor to
-[ActiveLabel.swift](https://github.com/optonaut/ActiveLabel.swift): rebuilt
-around a layered design, two interchangeable rendering backends, and a fluent
-modifier API. **Zero third-party dependencies. Swift Package Manager only.**
+No third-party dependencies. Pure Swift Package Manager.
 
 ```swift
-import ActiveText
-
-ActiveText("Hello @mohammed check https://apple.com #swift")
-    .onMentionTap { username in print("mention:", username) }   // "mohammed"
-    .onHashtagTap { topic    in print("hashtag:", topic) }      // "swift"
-    .onURLTap     { url      in open(url) }                     // https://apple.com
-```
-
-> `InteractiveText` is a public alias for `ActiveText`, so the snippet above
-> works under either name.
-
----
-
-## Screenshots
-
-Captured from the demo app (`ActiveTextDemo`) — each screen shows the exact code
-and its live result. Drop your captured PNGs into [`Screenshots/`](Screenshots)
-using the filenames below (see [`Screenshots/README.md`](Screenshots/README.md)).
-- ## Detect mentions
-
-  <img src="https://github.com/user-attachments/assets/ff93c061-9850-4add-87ba-6c36cd9d946d" width="900" alt="Detect mentions">
-
-- ## Detect everything , custom colors
-
-  <img src="https://github.com/user-attachments/assets/54b836b9-5fb5-4fce-86f8-99fa7d478c96" width="900" alt="Detect everything">
-
-- ## Tap handlers
-
-  <img src="https://github.com/user-attachments/assets/0f5679c1-e335-49c7-8880-2ee1703617a4" width="900" alt="Tap handlers">
-
-- ## Underline & highlight
-
-  <img src="https://github.com/user-attachments/assets/23b7c60d-a7df-40a4-98ab-0db204864a3a" width="900" alt="Underline & highlight">
-
-- ## Custom pattern
-
-  <img src="https://github.com/user-attachments/assets/bfca47be-e981-462e-99cb-173aef9a3151" width="900" alt="Custom pattern">
-
-- ## Markdown links
-
-  ### Before
-
-  <img src="https://github.com/user-attachments/assets/b3884db2-0f2b-44d7-aaff-06de555be3e4" width="900" alt="Before">
-
-  ### After
-
-  <img src="https://github.com/user-attachments/assets/d695b2cf-e47a-4e97-8735-0bdbf950ada4" width="900" alt="After">
-
-- ## Context menu
-
-  <img src="https://github.com/user-attachments/assets/6e2dc056-f3d2-4797-9070-43cc1d69c9fa" width="900" alt="Context menu">
-
-- ## Preview + blur backdrop
-
-  <img src="https://github.com/user-attachments/assets/e3dcfc94-74d8-40b4-a31b-28f94e3483b6" width="900" alt="Preview + blur backdrop">
-
-- ## Preview + dim backdrop
-
-  <img src="https://github.com/user-attachments/assets/4b439ef0-63ed-42be-b9d9-f470bbcf3391" width="900" alt="Preview + dim backdrop">
-
-- ## Limit lines
-
-  <img src="https://github.com/user-attachments/assets/71ce7736-469b-40a7-bddf-2874e30649ae" width="900" alt="Limit lines">
-
-- ## Alignment
-
-  <img src="https://github.com/user-attachments/assets/aabad6b2-238d-41c1-86ef-517f40d84498" width="900" alt="Alignment">
----
-
-## Features
-
-- **SwiftUI-first**, with a UIKit backend and a stand-alone `ActiveTextLabel`
-  drop-in for pure-UIKit apps.
-- Detects **URLs, mentions, hashtags, emails, phone numbers** and any number of
-  **custom regex / closure patterns**.
-- **Tappable ranges with callback actions** — per-type or catch-all.
-- **Per-type styling**: colour, font, underline, background highlight, and a
-  pressed/highlight state.
-- Built on **`AttributedString`** (SwiftUI backend) and **TextKit** (UIKit
-  backend); optional **`TextRenderer`** effects on iOS 18+.
-- **Dynamic Type, RTL and accessibility** come for free on the SwiftUI backend.
-- **Optional Markdown** inline links: `[label](url)`.
-- **Async-safe / thread-safe**: detection is a pure function with a lock-guarded
-  regex cache, plus an `async` scanning API for long text.
-- **High performance**: O(n) detection, compiled-regex caching, O(n) rendering.
-
-## Requirements
-
-- iOS 17+
-- Swift 6 toolchain (Xcode 16+)
-
-## Installation (Swift Package Manager)
-
-In Xcode: **File ▸ Add Package Dependencies…** and point at this repository, or
-add it to your `Package.swift`:
-
-```swift
-dependencies: [
-    .package(url: "https://github.com/TariqAlmazyad/ActiveText.git", from: "1.0.0")
-],
-targets: [
-    .target(name: "YourApp", dependencies: ["ActiveText"])
-]
-```
-
----
-
-## Quick start
-
-```swift
-ActiveText("Ping @sara about https://swift.org #concurrency")
-    .detect([.url, .mention, .hashtag])      // what to look for
-    .onMentionTap { open(profile: $0) }
-    .onHashtagTap { search(topic: $0) }
-    .onURLTap     { route(to: $0) }
-```
-
-Detect more types, including email and phone:
-
-```swift
-ActiveText(message)
-    .detect([.url, .mention, .hashtag, .email, .phone])
-```
-
-URLs, emails and phone numbers are tappable **by default** (open in browser /
-Mail / dialer). Turn that off with `.autoOpenLinks(false)`.
-
-## Styling
-
-Every type has a sensible default (links blue & underlined, mentions purple, …).
-Override per type, or replace the whole theme:
-
-```swift
-ActiveText(post)
+ActiveText("Hello @ActiveText")
+    .detect([.mention])
     .color(.mention, .pink)
-    .colors([.hashtag: .indigo, .url: .teal])
-    .underline(.url, false)
-    .highlight(.mention, .pink.opacity(0.15))
-    .style(.hashtag) { $0.color = .orange; $0.font = .body.bold() }
-    .font(.title3)                            // base font (scales with Dynamic Type)
 ```
 
-## Press-and-hold highlight
+<img src="https://github.com/user-attachments/assets/ff93c061-9850-4add-87ba-6c36cd9d946d" width="900" alt="Detect mentions">
 
-While the user presses an element, ActiveText draws a rounded highlight pill
-behind it. It's on by default and auto-tinted from each element's own colour, so
-a purple mention gets a purple highlight. Configure it fluently:
+That's the whole idea. Keep going for more — every section below is **one snippet + the result**.
+
+---
+
+## Install
+
+In Xcode: **File ▸ Add Package Dependencies…** and paste:
+
+```
+https://github.com/TariqAlmazyad/ActiveText.git
+```
+
+Or in `Package.swift`:
 
 ```swift
-ActiveText(post)
-    .pressHighlight()                          // on (default look)
-    .pressHighlightColor(.yellow.opacity(0.3)) // …or a fixed tint
-    .pressHighlightCornerRadius(8)             // …rounder pill
-    .pressHighlight(for: [.hashtag, .mention]) // …only these types
-
-ActiveText(post).pressHighlight(false)         // turn the overlay off
+.package(url: "https://github.com/TariqAlmazyad/ActiveText.git", from: "1.0.0")
 ```
 
-Reuse a configuration across views by passing an `ActiveTextPressHighlight`:
+Then `import ActiveText`. Requires **iOS 17+** and **Swift 6 (Xcode 16+)**.
+
+---
+
+## Examples
+
+### 1. Detect everything, style each type
+
+Pick what to look for, then color it however you like.
 
 ```swift
-let highlight = ActiveTextPressHighlight(color: .mint.opacity(0.25), cornerRadius: 10)
-ActiveText(post).pressHighlight(highlight)
+ActiveText(text)
+    .detect([.mention, .url, .email, .phone, .hashtag])
+    .underline(.mention)
+    .underline([.phone, .hashtag])
 ```
 
-> The press highlight is a **UIKit-backend** affordance (per-element hit-testing
-> is required to draw it). It applies when ActiveText renders through `.uiKit` —
-> which `.automatic` selects whenever a context menu is attached, or which you
-> can request with `.renderingEngine(.uiKit)`. On the pure-SwiftUI backend the
-> system's own pressed appearance is used instead.
+<img src="https://github.com/user-attachments/assets/54b836b9-5fb5-4fce-86f8-99fa7d478c96" width="900" alt="Detect everything, custom colors">
 
-## Custom patterns
+### 2. Handle taps
 
-A custom **regex** type:
+Each type has its own callback. URLs, emails and phones also open automatically (turn off with `.autoOpenLinks(false)`).
+
+```swift
+ActiveText(text)
+    .detect([.mention, .url, .email, .phone, .hashtag])
+    .onElementTap { textTapped in
+        print(textTapped.type, textTapped.value)
+    }
+```
+
+<img src="https://github.com/user-attachments/assets/0f5679c1-e335-49c7-8880-2ee1703617a4" width="900" alt="Tap handlers">
+
+### 3. Underline & highlight
+
+Mix and match per type.
+
+```swift
+ActiveText(text)
+    .detect([.mention, .url, .email, .phone, .hashtag])
+    .underline(.mention)
+    .underline([.phone, .hashtag])
+    .highlight(.hashtag, .green.opacity(0.4))
+    .highlight(.mention, .red.opacity(0.4))
+    .highlight(.url, .yellow.opacity(0.4))
+```
+
+<img src="https://github.com/user-attachments/assets/23b7c60d-a7df-40a4-98ab-0db204864a3a" width="900" alt="Underline & highlight">
+
+### 4. Your own patterns
+
+A custom regex type — perfect for ticket IDs, SKUs, anything else.
 
 ```swift
 ActiveText("See ticket TICKET-42")
@@ -198,8 +96,109 @@ ActiveText("See ticket TICKET-42")
     }
 ```
 
-Custom **logic** via a `ClosureParser` (more than a regex — e.g. validate
-against an allow-list):
+<img src="https://github.com/user-attachments/assets/bfca47be-e981-462e-99cb-173aef9a3151" width="900" alt="Custom pattern">
+
+### 5. Markdown links
+
+Turn `[label](url)` syntax into a real tappable link. One modifier.
+
+**Before — raw markdown shows through:**
+
+<img src="https://github.com/user-attachments/assets/b3884db2-0f2b-44d7-aaff-06de555be3e4" width="900" alt="Markdown links — before">
+
+**After — `.markdown()` does the work:**
+
+```swift
+ActiveText(text)
+    .markdown()
+    .color(.url, .blue)
+    .underline(.url)
+```
+
+<img src="https://github.com/user-attachments/assets/d695b2cf-e47a-4e97-8735-0bdbf950ada4" width="900" alt="Markdown links — after">
+
+### 6. Limit lines & alignment
+
+Works exactly like SwiftUI's `Text`:
+
+```swift
+ActiveText(text).lineLimit(2)
+ActiveText(text).multilineTextAlignment(.center)
+```
+
+<p>
+  <img src="https://github.com/user-attachments/assets/71ce7736-469b-40a7-bddf-2874e30649ae" width="440" alt="Limit lines">
+  <img src="https://github.com/user-attachments/assets/aabad6b2-238d-41c1-86ef-517f40d84498" width="440" alt="Alignment">
+</p>
+
+---
+
+## Long-press menus
+
+Long-press any detected element to get a native context menu — copy, share, or your own actions.
+
+### Default menu
+
+```swift
+ActiveText(message)
+    .renderingEngine(.uiKit)        // menus need the UIKit backend
+    .contextMenuActions { element in
+        [
+            .button("Open", systemImage: "arrow.up.forward.app") { open(element.value) },
+            .divider,
+            .copy(element.value),
+            .share(element.value)
+        ]
+    }
+```
+
+<img src="https://github.com/user-attachments/assets/6e2dc056-f3d2-4797-9070-43cc1d69c9fa" width="900" alt="Context menu">
+
+### Blur the rest of the screen
+
+```swift
+ActiveText(message)
+    .contextMenuPreview(backdrop: .blur(.regular))
+    .contextMenuActions { element in [ .copy(element.value) ] }
+```
+
+<img src="https://github.com/user-attachments/assets/e3dcfc94-74d8-40b4-a31b-28f94e3483b6" width="900" alt="Preview with blur backdrop">
+
+### Or dim it
+
+```swift
+ActiveText(message)
+    .contextMenuPreview(backdrop: .dim(opacity: 0.5))
+    .contextMenuActions { element in [ .copy(element.value) ] }
+```
+
+<img src="https://github.com/user-attachments/assets/4b439ef0-63ed-42be-b9d9-f470bbcf3391" width="900" alt="Preview with dim backdrop">
+
+---
+
+## Press-and-hold highlight
+
+Pressing an element draws a rounded pill behind it, auto-tinted to that element's color. On by default.
+
+```swift
+ActiveText(post)
+    .pressHighlight()                          // on (default)
+    .pressHighlightColor(.yellow.opacity(0.3)) // …or a fixed tint
+    .pressHighlightCornerRadius(8)             // …rounder pill
+    .pressHighlight(for: [.hashtag, .mention]) // …only these types
+
+ActiveText(post).pressHighlight(false)         // turn off
+```
+
+> The highlight needs UIKit hit-testing. ActiveText switches to the UIKit backend automatically when you attach a context menu, or request it with `.renderingEngine(.uiKit)`.
+
+---
+
+## A few more tricks
+
+### Validate against an allow-list
+
+Use a `ClosureParser` when a regex isn't enough:
 
 ```swift
 let valid: Set<String> = ["SAVE20", "WELCOME"]
@@ -212,107 +211,22 @@ let promo = ClosureParser(type: .custom(id: "promo", pattern: "")) { text in
 ActiveText("Use code SAVE20 today").parser(promo)
 ```
 
-## Markdown links
+### SwiftUI-native menu with real views
 
-```swift
-ActiveText("Read [the docs](https://apple.com/textkit)")
-    .markdown()
-    .onURLTap { open($0) }            // renders "the docs", delivers the URL
-```
-
-## Long-press context menus (UIKit backend)
-
-Array form with `.contextMenu`:
-
-```swift
-ActiveText(message)
-    .renderingEngine(.uiKit)          // required for menus + pressed state
-    .contextMenu { element in
-        [
-            .init(title: "Open", systemImage: "arrow.up.forward.app") { open(element.value) },
-            .copy(element.value),
-            .share(element.value)
-        ]
-    }
-```
-
-Declarative builder form with `.contextMenuActions` — buttons, dividers and
-sub-menus, plus `if` / `switch` / `for`. Behaves identically to `.contextMenu`
-and works with both the default and custom previews:
-
-```swift
-ActiveText(message)
-    .contextMenuPreview()                                  // default preview…
-    // .contextMenuPreview { el in MyCard(value: el.value) }   // …or a custom one
-    .contextMenuActions { element in
-        [
-            .button("Open", systemImage: "arrow.up.forward.app") { open(element.value) },
-            .button("Delete", systemImage: "trash", role: .destructive) { delete(element) },
-            .divider,
-            .submenu("Share", systemImage: "square.and.arrow.up") {
-                [
-                    .copy(element.value),
-                    .share(element.value)
-                ]
-            }
-        ]
-    }
-```
-
-> `.contextMenuActions` is a result-builder DSL rather than literal SwiftUI
-> `Button`/`Divider`: UIKit's context-menu interaction only accepts
-> `UIMenuElement`s, and there's no public SwiftUI `Button` → `UIMenu` bridge.
-> The DSL gives the same declarative feel and the same word-only lift + preview.
-> Return the items as a comma-separated array (`[ ... ]`): in Swift a statement
-> that begins with `.` is parsed as a continuation of the previous line, so a
-> bare list of `.button` / `.divider` items would chain instead of stack.
-
-### Focus the preview with a backdrop
-
-`.contextMenuPreview(backdrop:)` blurs or dims the rest of the screen while the
-preview is up, so attention snaps to the lifted card:
-
-```swift
-ActiveText(message)
-    .renderingEngine(.uiKit)
-    .contextMenuPreview(backdrop: .blur(.regular))   // .ultraThin / .thin / .regular / .thick / .chrome
-    // .contextMenuPreview(backdrop: .dim(opacity: 0.5))   // or a plain darkening
-    .contextMenu { element in [ .copy(element.value) ] }
-```
-
-The default is `.none` (iOS's own subtle dimming only), so existing call sites
-are unchanged.
-
-### Two menu paths — each platform, its own views
-
-Because a per-element menu requires UIKit hit-testing (and UIKit menus can't
-host SwiftUI views), ActiveText offers a menu API for each backend:
-
-| Modifier              | Backend  | Content            | Scope        | Lift             |
-|-----------------------|----------|--------------------|--------------|------------------|
-| `.contextMenuActions` | UIKit    | `.button`/`.divider`/`.submenu` DSL → `UIMenu` | per element  | word-only        |
-| `.menuItems`          | SwiftUI  | real SwiftUI `Button`/`Divider`/your views     | whole text   | whole view / custom preview |
-
-SwiftUI-native menu with **real SwiftUI views** (drop in reusable button
-components):
+When you want real SwiftUI buttons (whole-text scope, not per-element):
 
 ```swift
 ActiveText(message)
     .menuItems {
         Button { copyAll() } label: { Label("Copy", systemImage: "doc.on.doc") }
         Divider()
-        MyReportButton()                 // any reusable SwiftUI view
+        MyReportButton()
     } preview: {
-        MyPreviewCard()                  // optional custom preview
+        MyPreviewCard()
     }
 ```
 
-`.menuItems` uses SwiftUI's own `.contextMenu`, so it applies to the whole text
-view and the builder gets no specific element. Use `.contextMenuActions` when
-you need the per-link scoping and word-only lift. Don't combine the two on one
-view.
-
-## Pure UIKit
+### Pure UIKit drop-in
 
 ```swift
 let label = ActiveTextLabel()
@@ -320,25 +234,18 @@ label.update(text: "Hi @bob, see https://apple.com", types: [.mention, .url])
 label.onTap(.mention) { print("mention:", $0) }
 ```
 
-## Performance / long text
-
-Detection is a pure function and compiled regexes are cached, so synchronous
-scanning is cheap for typical content. For very long documents, parse off the
-main thread:
+### Long text? Parse off the main thread
 
 ```swift
 ActiveText(veryLongArticle).asyncParsing()
 ```
 
-or call the scanner directly:
-
-```swift
-let elements = await ActiveTextScanner.scan(text, types: .allBuiltIn)
-```
-
 ---
 
-## Rendering backends
+## Under the hood
+
+<details>
+<summary><strong>Rendering backends</strong> — when to pick which</summary>
 
 | Engine       | Rendering                | Strengths                                                  | Limitations                          |
 |--------------|--------------------------|------------------------------------------------------------|--------------------------------------|
@@ -346,15 +253,12 @@ let elements = await ActiveTextScanner.scan(text, types: .allBuiltIn)
 | `.uiKit`     | `UILabel` + TextKit      | Per-element pressed highlight; context menus; precise hit-testing. | A `UIViewRepresentable` bridge. |
 | `.automatic` | picks for you            | `.uiKit` when a context menu is set, else `.swiftUI`.      | —                                    |
 
-The SwiftUI backend makes elements tappable by attaching a private
-`activetext://` link to each one and intercepting it via `OpenURLAction`; your
-`.onURLTap` always receives the **real** web URL, never the routing scheme.
+The SwiftUI backend makes elements tappable by attaching a private `activetext://` link to each one and intercepting it via `OpenURLAction`; your `.onURLTap` always receives the **real** web URL, never the routing scheme.
 
-## Architecture
+</details>
 
-ActiveText is organised as one-way layers — see
-[`Documentation/ARCHITECTURE.md`](Documentation/ARCHITECTURE.md) for the full
-write-up.
+<details>
+<summary><strong>Architecture</strong> — one-way layers</summary>
 
 ```
 String
@@ -370,19 +274,45 @@ SwiftUI `ActiveText`  /  UIKit `ActiveTextLabel`   (Adapters)
   │   Interaction  ← taps routed back through ActiveTextInteraction
 ```
 
-Each layer depends only on the ones above it, which keeps every piece
-independently testable and easy to extend — add a parser, a style or a backend
-without touching the rest.
+Each layer depends only on the ones above it — add a parser, a style or a backend without touching the rest. Full write-up in [`Documentation/ARCHITECTURE.md`](Documentation/ARCHITECTURE.md).
 
-## Testing & benchmarks
+</details>
+
+<details>
+<summary><strong>Two menu paths</strong> — UIKit vs SwiftUI</summary>
+
+| Modifier              | Backend  | Content            | Scope        | Lift             |
+|-----------------------|----------|--------------------|--------------|------------------|
+| `.contextMenuActions` | UIKit    | `.button`/`.divider`/`.submenu` DSL → `UIMenu` | per element  | word-only        |
+| `.menuItems`          | SwiftUI  | real SwiftUI `Button`/`Divider`/your views     | whole text   | whole view / custom preview |
+
+Use `.contextMenuActions` when you need per-link scoping and word-only lift. Use `.menuItems` when you want real SwiftUI views. Don't combine the two on one view.
+
+`.contextMenuActions` is a result-builder DSL rather than literal SwiftUI `Button`/`Divider` because UIKit's context-menu interaction only accepts `UIMenuElement`s, and there's no public SwiftUI `Button` → `UIMenu` bridge.
+
+</details>
+
+---
+
+## Features
+
+- **SwiftUI-first**, with a UIKit backend and a stand-alone `ActiveTextLabel` for pure-UIKit apps.
+- Detects URLs, mentions, hashtags, emails, phone numbers + any number of **custom regex / closure patterns**.
+- **Tappable ranges** with per-type or catch-all callbacks.
+- **Per-type styling**: colour, font, underline, background highlight, pressed state.
+- Built on `AttributedString` (SwiftUI) and TextKit (UIKit); optional `TextRenderer` effects on iOS 18+.
+- **Dynamic Type, RTL and accessibility** come for free.
+- **Optional Markdown** inline links: `[label](url)`.
+- **Async-safe**: detection is pure with a lock-guarded regex cache; `async` scanning API for long text.
+- **High performance**: O(n) detection, compiled-regex caching, O(n) rendering.
+
+## Testing
 
 ```bash
 swift test
 ```
 
-The suite (swift-testing) covers parsers, the scanner's overlap/priority rules,
-tokenisation, the element/type model, styling, custom parsers, markdown, and
-time-boxed performance/benchmark tests for long documents.
+Covers parsers, the scanner's overlap/priority rules, tokenisation, the element/type model, styling, custom parsers, markdown, and time-boxed performance tests.
 
 ## Examples & demo app
 
@@ -391,4 +321,4 @@ time-boxed performance/benchmark tests for long documents.
 
 ## License
 
-MIT 
+MIT
