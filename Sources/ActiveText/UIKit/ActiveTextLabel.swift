@@ -42,6 +42,13 @@ public final class ActiveTextLabel: UILabel {
     private var theme: ActiveTextTheme = .default
     private var autoOpenLinks = true
 
+    /// Appearance of the press-and-hold highlight (the rounded pill drawn behind
+    /// an element while it is pressed). Settable directly for pure-UIKit use; the
+    /// SwiftUI bridge assigns it from `ActiveText.pressHighlight(_:)`.
+    public var pressHighlight: ActiveTextPressHighlight = .default {
+        didSet { if oldValue != pressHighlight { setNeedsDisplay() } }
+    }
+
     // MARK: Interaction
 
     /// Per-type tap callbacks keyed by ``ActiveTextType/identifier``.
@@ -279,13 +286,19 @@ public final class ActiveTextLabel: UILabel {
     private func setPressed(element: ActiveTextElement, range: NSRange) {
         pressedElement = element
         pressedRange = range
-        let style = theme.style(for: element.type)
 
+        // Types the press highlight excludes stay tappable but show no press
+        // feedback at all (neither the dimmed glyphs nor the background pill).
+        guard pressHighlight.applies(to: element.type) else { return }
+
+        // Dim the glyphs slightly (the classic "link pressed" cue). The rounded
+        // background pill is painted behind the text in `drawText(in:)`.
+        let style = theme.style(for: element.type)
         let mutable = NSMutableAttributedString(attributedString: textStorage)
         mutable.addAttribute(.foregroundColor, value: UIColor(style.effectivePressedColor), range: range)
-        mutable.addAttribute(.backgroundColor, value: UIColor(style.effectivePressedBackgroundColor), range: range)
         // Mutate the displayed text without re-running detection. The
-        // `attributedText` setter also syncs `textStorage` via its observer.
+        // `attributedText` setter syncs `textStorage` via its observer and
+        // schedules a redraw, so the pill is painted in the same pass.
         attributedText = mutable
     }
 
@@ -294,6 +307,55 @@ public final class ActiveTextLabel: UILabel {
         pressedElement = nil
         pressedRange = nil
         rebuildAttributedText()   // restore the resting appearance
+    }
+
+    // MARK: Press-highlight drawing
+
+    /// Paints the rounded press-highlight pill behind the pressed element, then
+    /// lets `UILabel` draw the (dimmed) glyphs on top.
+    public override func drawText(in rect: CGRect) {
+        drawPressHighlight()
+        super.drawText(in: rect)
+    }
+
+    /// Fills one rounded pill per line fragment of the pressed range, so a link
+    /// or hashtag that wraps onto a second line is highlighted correctly.
+    private func drawPressHighlight() {
+        guard let range = pressedRange,
+              let element = pressedElement,
+              pressHighlight.applies(to: element.type) else { return }
+
+        let style = theme.style(for: element.type)
+        // Explicit tint wins; otherwise fall back to a per-type pressed override,
+        // then to a faint tint of the element's own colour.
+        let tint = pressHighlight.color
+            ?? style.pressedBackgroundColor
+            ?? style.color.opacity(0.15)
+        let radius = pressHighlight.cornerRadius
+
+        UIColor(tint).setFill()
+        for fragment in enclosingRects(for: range) {
+            // A little horizontal breathing room around the word.
+            let pill = fragment.insetBy(dx: -2, dy: 0)
+            UIBezierPath(roundedRect: pill, cornerRadius: radius).fill()
+        }
+    }
+
+    /// The per-line enclosing rects for a character range, in the label's own
+    /// coordinate space (one rect per line fragment the range spans).
+    private func enclosingRects(for charRange: NSRange) -> [CGRect] {
+        textContainer.size = bounds.size
+        layoutManager.ensureLayout(for: textContainer)
+        let glyphRange = layoutManager.glyphRange(forCharacterRange: charRange, actualCharacterRange: nil)
+        var rects: [CGRect] = []
+        layoutManager.enumerateEnclosingRects(
+            forGlyphRange: glyphRange,
+            withinSelectedGlyphRange: NSRange(location: NSNotFound, length: 0),
+            in: textContainer
+        ) { fragmentRect, _ in
+            rects.append(fragmentRect)
+        }
+        return rects
     }
 
     // MARK: Tap dispatch

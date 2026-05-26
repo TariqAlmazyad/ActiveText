@@ -169,6 +169,35 @@ ActiveText(post)
     .font(.title3)                            // base font (scales with Dynamic Type)
 ```
 
+## Press-and-hold highlight
+
+While the user presses an element, ActiveText draws a rounded highlight pill
+behind it. It's on by default and auto-tinted from each element's own colour, so
+a purple mention gets a purple highlight. Configure it fluently:
+
+```swift
+ActiveText(post)
+    .pressHighlight()                          // on (default look)
+    .pressHighlightColor(.yellow.opacity(0.3)) // …or a fixed tint
+    .pressHighlightCornerRadius(8)             // …rounder pill
+    .pressHighlight(for: [.hashtag, .mention]) // …only these types
+
+ActiveText(post).pressHighlight(false)         // turn the overlay off
+```
+
+Reuse a configuration across views by passing an `ActiveTextPressHighlight`:
+
+```swift
+let highlight = ActiveTextPressHighlight(color: .mint.opacity(0.25), cornerRadius: 10)
+ActiveText(post).pressHighlight(highlight)
+```
+
+> The press highlight is a **UIKit-backend** affordance (per-element hit-testing
+> is required to draw it). It applies when ActiveText renders through `.uiKit` —
+> which `.automatic` selects whenever a context menu is attached, or which you
+> can request with `.renderingEngine(.uiKit)`. On the pure-SwiftUI backend the
+> system's own pressed appearance is used instead.
+
 ## Custom patterns
 
 A custom **regex** type:

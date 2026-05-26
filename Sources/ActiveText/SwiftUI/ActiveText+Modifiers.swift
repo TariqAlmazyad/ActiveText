@@ -124,6 +124,58 @@ extension ActiveText {
         style(type) { $0.backgroundColor = color; $0.highlightCornerRadius = cornerRadius }
     }
 
+    // MARK: Press-and-hold highlight (UIKit backend)
+    //
+    // The rounded pill drawn behind an element while it is pressed. See
+    // ``ActiveTextPressHighlight`` for the data model and the backend caveat
+    // (these take effect on the `.uiKit` backend; the SwiftUI backend uses the
+    // system's own pressed appearance).
+
+    /// Enables or disables the press-and-hold highlight (on by default).
+    ///
+    /// ```swift
+    /// ActiveText(post).pressHighlight(false)   // no pressed overlay
+    /// ```
+    public func pressHighlight(_ enabled: Bool = true) -> ActiveText {
+        var copy = self; copy.pressHighlight.isEnabled = enabled; return copy
+    }
+
+    /// Sets the press-highlight tint. Pass `nil` to derive it from each
+    /// element's own colour. Implicitly enables the highlight.
+    ///
+    /// ```swift
+    /// ActiveText(post).pressHighlightColor(.yellow.opacity(0.3))
+    /// ```
+    public func pressHighlightColor(_ color: Color?) -> ActiveText {
+        var copy = self
+        copy.pressHighlight.isEnabled = true
+        copy.pressHighlight.color = color
+        return copy
+    }
+
+    /// Sets the corner radius of the press-highlight pill.
+    public func pressHighlightCornerRadius(_ radius: CGFloat) -> ActiveText {
+        var copy = self; copy.pressHighlight.cornerRadius = radius; return copy
+    }
+
+    /// Restricts the press highlight to the given types. Implicitly enables it.
+    ///
+    /// ```swift
+    /// ActiveText(post).pressHighlight(for: [.hashtag, .mention])
+    /// ```
+    public func pressHighlight(for types: [ActiveTextType]) -> ActiveText {
+        var copy = self
+        copy.pressHighlight.isEnabled = true
+        copy.pressHighlight.types = Set(types)
+        return copy
+    }
+
+    /// Replaces the entire press-highlight configuration in one call — handy for
+    /// reusing a shared ``ActiveTextPressHighlight`` across views.
+    public func pressHighlight(_ configuration: ActiveTextPressHighlight) -> ActiveText {
+        var copy = self; copy.pressHighlight = configuration; return copy
+    }
+
     /// Sets the base font for non-styled text.
     public func font(_ font: Font?) -> ActiveText {
         var copy = self; copy.baseFont = font; return copy
