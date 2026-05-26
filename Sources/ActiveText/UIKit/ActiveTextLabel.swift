@@ -634,7 +634,7 @@ extension ActiveTextLabel: UIContextMenuInteractionDelegate {
                     return UIMenu(children: ActiveTextMenuItem.makeUIMenuElements(itemsProvider(captured)))
                 }
                 if let provider {
-                    return UIMenu(children: provider(captured).map { $0.makeUIAction() })
+                    return UIMenu(children: ActiveTextMenuAction.makeUIMenuElements(provider(captured)))
                 }
                 return UIMenu(children: [])
             }
