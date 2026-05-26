@@ -119,6 +119,19 @@ extension ActiveText {
         style(type) { $0.underline = enabled }
     }
 
+    /// Toggles underline for several types at once.
+    ///
+    /// ```swift
+    /// ActiveText(post).underline([.url, .email, .mention])
+    /// ```
+    public func underline(_ types: [ActiveTextType], _ enabled: Bool = true) -> ActiveText {
+        var copy = self
+        for type in types {
+            copy.theme = copy.theme.updating(type) { $0.underline = enabled }
+        }
+        return copy
+    }
+
     /// Sets a background highlight for one type.
     public func highlight(_ type: ActiveTextType, _ color: Color?, cornerRadius: CGFloat = 4) -> ActiveText {
         style(type) { $0.backgroundColor = color; $0.highlightCornerRadius = cornerRadius }
