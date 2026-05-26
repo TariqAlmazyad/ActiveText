@@ -22,6 +22,7 @@ import UIKit
 ///         [
 ///             .init(title: "Open", systemImage: "arrow.up.right") { open(element) },
 ///             .copy(element.value),                       // built-in copy action
+///             .divider,                                   // section break
 ///             .init(title: "Delete", systemImage: "trash", isDestructive: true) { … }
 ///         ]
 ///     }
@@ -44,6 +45,11 @@ public struct ActiveTextMenuAction {
     /// Invoked when the user selects the item.
     public let handler: @MainActor () -> Void
 
+    /// `true` for the ``divider`` sentinel. The menu builder treats it as a
+    /// section break and ignores the other fields. Not part of the public API
+    /// because dividers are constructed via the ``divider`` factory.
+    let isDivider: Bool
+
     public init(
         title: String,
         systemImage: String? = nil,
@@ -54,6 +60,38 @@ public struct ActiveTextMenuAction {
         self.systemImage = systemImage
         self.isDestructive = isDestructive
         self.handler = handler
+        self.isDivider = false
+    }
+
+    /// Private initialiser used by ``divider``.
+    private init() {
+        self.title = ""
+        self.systemImage = nil
+        self.isDestructive = false
+        self.handler = {}
+        self.isDivider = true
+    }
+
+    /// A separator between groups of items.
+    ///
+    /// Renders as a section break in the long-press menu — implemented as an
+    /// inline `UIMenu`, which is how UIKit draws a divider inside a context
+    /// menu. Leading, trailing and consecutive dividers collapse, so feel free
+    /// to drop them in liberally:
+    ///
+    /// ```swift
+    /// .contextMenu { element in
+    ///     [
+    ///         .copy(element.value),
+    ///         .share(element.value),
+    ///         .divider,
+    ///         .init(title: "Report", systemImage: "exclamationmark.bubble",
+    ///               isDestructive: true) { report(element) }
+    ///     ]
+    /// }
+    /// ```
+    public static var divider: ActiveTextMenuAction {
+        ActiveTextMenuAction()
     }
 }
 
@@ -82,7 +120,7 @@ extension ActiveTextMenuAction {
         }
     }
 
-    /// Converts to a `UIAction` for use in a `UIMenu`.
+    /// Converts to a `UIAction` for use in a `UIMenu`. Not valid for dividers.
     func makeUIAction() -> UIAction {
         UIAction(
             title: title,
@@ -91,6 +129,28 @@ extension ActiveTextMenuAction {
         ) { _ in
             handler()
         }
+    }
+
+    /// Converts a flat `[ActiveTextMenuAction]` into `UIMenuElement`s, honouring
+    /// ``divider`` entries as section breaks.
+    ///
+    /// Items are grouped between dividers and each non-empty group becomes an
+    /// inline `UIMenu` (`UIMenu.Options.displayInline`) — that's how UIKit draws
+    /// a separator inside a context menu. With no dividers the actions are
+    /// returned flat so the menu has no unnecessary nesting.
+    static func makeUIMenuElements(_ actions: [ActiveTextMenuAction]) -> [UIMenuElement] {
+        var sections: [[UIMenuElement]] = [[]]
+        for action in actions {
+            if action.isDivider {
+                sections.append([])
+            } else {
+                sections[sections.count - 1].append(action.makeUIAction())
+            }
+        }
+
+        let nonEmpty = sections.filter { !$0.isEmpty }
+        if nonEmpty.count <= 1 { return nonEmpty.first ?? [] }
+        return nonEmpty.map { UIMenu(title: "", options: .displayInline, children: $0) }
     }
 }
 
