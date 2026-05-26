@@ -81,8 +81,12 @@ public struct DataDetectorParser: ActiveTextParsing, @unchecked Sendable {
 
             case .phone:
                 let matched = nsString.substring(with: nsRange)
-                // Prefer the detector's normalised number; fall back to digits.
-                let value = result.phoneNumber ?? matched.filter { $0 == "+" || $0.isNumber }
+                // The detector's `phoneNumber` often preserves the original
+                // formatting (spaces, parens, dashes). For `value` we want a
+                // dialable string — digits and a leading `+` only — while
+                // `text` keeps the user-visible formatting intact.
+                let source = result.phoneNumber ?? matched
+                let value = source.filter { $0 == "+" || $0.isNumber }
                 elements.append(
                     ActiveTextElement(
                         type: .phone,
