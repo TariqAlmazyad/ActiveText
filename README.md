@@ -34,66 +34,55 @@ ActiveText("Hello @mohammed check https://apple.com #swift")
 Captured from the demo app (`ActiveTextDemo`) — each screen shows the exact code
 and its live result. Drop your captured PNGs into [`Screenshots/`](Screenshots)
 using the filenames below (see [`Screenshots/README.md`](Screenshots/README.md)).
+- ## Detect mentions
 
-<table>
-  <tr>
-    <td align="center" width="33%">
-      <img src="Screenshots/mentions.png" width="250" alt="Mentions"><br>
-      <sub><b>Detect mentions</b></sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="Screenshots/detect-all.png" width="250" alt="Detect everything"><br>
-      <sub><b>Detect everything</b></sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="Screenshots/tap-mention.png" width="250" alt="Tap a mention"><br>
-      <sub><b>Tap handlers</b></sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="33%">
-      <img src="Screenshots/colors.png" width="250" alt="Colors"><br>
-      <sub><b>Per-type colors</b></sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="Screenshots/underline-highlight.png" width="250" alt="Underline & highlight"><br>
-      <sub><b>Underline &amp; highlight</b></sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="Screenshots/custom-pattern.png" width="250" alt="Custom pattern"><br>
-      <sub><b>Custom pattern</b></sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="33%">
-      <img src="Screenshots/markdown.png" width="250" alt="Markdown links"><br>
-      <sub><b>Markdown links</b></sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="Screenshots/context-menu.png" width="250" alt="Context menu"><br>
-      <sub><b>Context menu</b></sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="Screenshots/preview-blur.png" width="250" alt="Blur backdrop"><br>
-      <sub><b>Preview + blur backdrop</b></sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="33%">
-      <img src="Screenshots/preview-dim.png" width="250" alt="Dim backdrop"><br>
-      <sub><b>Preview + dim backdrop</b></sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="Screenshots/limit-lines.png" width="250" alt="Limit lines"><br>
-      <sub><b>Limit lines</b></sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="Screenshots/alignment.png" width="250" alt="Alignment"><br>
-      <sub><b>Alignment</b></sub>
-    </td>
-  </tr>
-</table>
+  <img src="https://github.com/user-attachments/assets/ff93c061-9850-4add-87ba-6c36cd9d946d" width="900" alt="Detect mentions">
 
+- ## Detect everything , custom colors
+
+  <img src="https://github.com/user-attachments/assets/54b836b9-5fb5-4fce-86f8-99fa7d478c96" width="900" alt="Detect everything">
+
+- ## Tap handlers
+
+  <img src="https://github.com/user-attachments/assets/0f5679c1-e335-49c7-8880-2ee1703617a4" width="900" alt="Tap handlers">
+
+- ## Underline & highlight
+
+  <img src="https://github.com/user-attachments/assets/23b7c60d-a7df-40a4-98ab-0db204864a3a" width="900" alt="Underline & highlight">
+
+- ## Custom pattern
+
+  <img src="https://github.com/user-attachments/assets/bfca47be-e981-462e-99cb-173aef9a3151" width="900" alt="Custom pattern">
+
+- ## Markdown links
+
+  ### Before
+
+  <img src="https://github.com/user-attachments/assets/b3884db2-0f2b-44d7-aaff-06de555be3e4" width="900" alt="Before">
+
+  ### After
+
+  <img src="https://github.com/user-attachments/assets/d695b2cf-e47a-4e97-8735-0bdbf950ada4" width="900" alt="After">
+
+- ## Context menu
+
+  <img src="https://github.com/user-attachments/assets/6e2dc056-f3d2-4797-9070-43cc1d69c9fa" width="900" alt="Context menu">
+
+- ## Preview + blur backdrop
+
+  <img src="https://github.com/user-attachments/assets/e3dcfc94-74d8-40b4-a31b-28f94e3483b6" width="900" alt="Preview + blur backdrop">
+
+- ## Preview + dim backdrop
+
+  <img src="https://github.com/user-attachments/assets/4b439ef0-63ed-42be-b9d9-f470bbcf3391" width="900" alt="Preview + dim backdrop">
+
+- ## Limit lines
+
+  <img src="https://github.com/user-attachments/assets/71ce7736-469b-40a7-bddf-2874e30649ae" width="900" alt="Limit lines">
+
+- ## Alignment
+
+  <img src="https://github.com/user-attachments/assets/aabad6b2-238d-41c1-86ef-517f40d84498" width="900" alt="Alignment">
 ---
 
 ## Features
