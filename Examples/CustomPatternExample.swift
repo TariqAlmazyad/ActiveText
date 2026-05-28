@@ -2,9 +2,9 @@
 //  CustomPatternExample.swift
 //  ActiveText — Examples
 //
-//  Two ways to add your own detection: a `.custom` regex type, and a
-//  `ClosureParser` for logic that's more than a regex (here: validating a
-//  promo code against an allow-list).
+//  Copy this whole view in. Two ways to add your own detection:
+//  a `.custom` regex type for invoice numbers, and a `ClosureParser` for logic
+//  beyond a regex (here: only allow-listed promo codes are highlighted).
 //
 
 #if canImport(SwiftUI)
@@ -12,52 +12,42 @@ import SwiftUI
 import ActiveText
 
 struct CustomPatternExample: View {
-    @State private var message = "Use code SAVE20 on order INV-2024-091. Invalid code WRONG99 is ignored."
+    let message = "Use code SAVE20 on order INV-2024-091. Invalid code WRONG99 is ignored."
 
-    // A promo-code parser that only accepts known-good codes.
-    private let validCodes: Set<String> = ["SAVE20", "WELCOME"]
+    let invoice = ActiveTextType.custom(id: "invoice", pattern: #"INV-\d{4}-\d+"#)
+    let promo    = ActiveTextType.custom(id: "promo", pattern: "")
 
-    private var codeType: ActiveTextType { .custom(id: "promo", pattern: "") }
+    // Only these promo codes are accepted — anything else stays plain text.
+    let validCodes: Set<String> = ["SAVE20", "WELCOME"]
 
-    private var promoParser: ClosureParser {
-        ClosureParser(type: codeType) { text in
-            let valid = validCodes
-            return text
-                .split(whereSeparator: { !$0.isLetter && !$0.isNumber })
+    var promoParser: ClosureParser {
+        ClosureParser(type: promo) { text in
+            text.split { !$0.isLetter && !$0.isNumber }
                 .map(String.init)
-                .filter { valid.contains($0) }
-                .compactMap { ActiveTextElement.make(matching: $0, in: text, type: .custom(id: "promo", pattern: "")) }
+                .filter { validCodes.contains($0) }
+                .compactMap { ActiveTextElement.make(matching: $0, in: text, type: promo) }
         }
     }
 
     var body: some View {
-        Form {
-            Section("Text") {
-                TextField("Message", text: $message, axis: .vertical)
-                    .lineLimit(3...)
-            }
+        VStack(alignment: .leading, spacing: 16) {
+            ActiveText(message)
+                .detect([invoice])
+                .parser(promoParser)
+                .color(invoice, .blue)
+                .color(promo, .green)
+                .style(promo) { $0.underline = true; $0.font = .body.bold() }
+                .onTap(invoice) { print("invoice:", $0) }
+                .onTap(promo)   { print("promo applied:", $0) }
+                .font(.body)
 
-            Section("Detected") {
-                ActiveText(message)
-                    // Custom regex type for invoice numbers …
-                    .detectCustom(id: "invoice", pattern: #"INV-\d{4}-\d+"#) { invoice in
-                        print("invoice:", invoice)
-                    }
-                    // … plus a closure parser for validated promo codes.
-                    .parser(promoParser)
-                    .color(.custom(id: "invoice", pattern: ""), .blue)
-                    .color(codeType, .green)
-                    .style(codeType) { $0.underline = true; $0.font = .body.bold() }
-                    .onTap(codeType) { print("promo applied:", $0) }
-                    .font(.body)
-            }
+            Text("Only allow-listed codes (SAVE20, WELCOME) highlight. WRONG99 stays plain.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
 
-            Section {
-                Text("Only allow-listed promo codes (SAVE20, WELCOME) are highlighted. WRONG99 stays plain.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
+            Spacer()
         }
+        .padding()
         .navigationTitle("Custom Patterns")
     }
 }

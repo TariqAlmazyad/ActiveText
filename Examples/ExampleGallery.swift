@@ -16,21 +16,18 @@ public struct ExampleGallery: View {
     public var body: some View {
         NavigationStack {
             List {
-                Section("Examples") {
-                    NavigationLink("Social Feed")      { SocialFeedExample() }
-                    #if canImport(UIKit)
-                    NavigationLink("Chat (UIKit)")     { ChatExample() }
-                    #endif
-                    NavigationLink("Custom Patterns")  { CustomPatternExample() }
-                    NavigationLink("Styling Gallery")  { StylingGalleryExample() }
+                // Ordered easiest → most advanced.
+                Section("Start here") {
+                    NavigationLink("1 · Basics")          { BasicsExample() }
+                    NavigationLink("2 · Styling Gallery") { StylingGalleryExample() }
                 }
 
-                Section("Quick start") {
-                    ActiveText("Hello @mohammed check https://apple.com #swift")
-                        .onMentionTap { print("mention:", $0) }
-                        .onHashtagTap { print("hashtag:", $0) }
-                        .onURLTap     { print("url:", $0) }
-                        .padding(.vertical, 4)
+                Section("Going further") {
+                    NavigationLink("3 · Social Feed")     { SocialFeedExample() }
+                    NavigationLink("4 · Custom Patterns") { CustomPatternExample() }
+                    #if canImport(UIKit)
+                    NavigationLink("5 · Chat (UIKit)")    { ChatExample() }
+                    #endif
                 }
             }
             .navigationTitle("ActiveText")

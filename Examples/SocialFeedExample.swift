@@ -2,9 +2,9 @@
 //  SocialFeedExample.swift
 //  ActiveText — Examples
 //
-//  The canonical use case: a scrolling feed where every post auto-detects
-//  mentions, hashtags and links, each routed to its own handler. Uses the
-//  default (SwiftUI) rendering backend.
+//  Copy this whole view into your project. One ActiveText, every detector on,
+//  each tap routed to its own handler. Markdown is enabled so `[label](url)`
+//  renders too.
 //
 
 #if canImport(SwiftUI)
@@ -12,40 +12,24 @@ import SwiftUI
 import ActiveText
 
 struct SocialFeedExample: View {
-    @State private var lastTap: String = "Tap a mention, hashtag or link"
+    @State private var lastTap = "Tap a mention, hashtag, link, email or phone"
+
+    let post = """
+    @mohammed shipped the new build today 🚀
+    Thanks @sara and @omar for the reviews!
+    Notes: https://apple.com/changelog
+    Mail us at support@example.com or call +1 (555) 123-4567
+    Read the write-up: [The Modern Text Stack](https://apple.com/textkit)
+    #release #swift #textkit
+    """
 
     var body: some View {
-        VStack(spacing: 0) {
-            banner
-            List(SampleData.posts) { post in
-                postRow(post)
-            }
-            .listStyle(.plain)
-        }
-        .navigationTitle("Social Feed")
-    }
+        VStack(alignment: .leading, spacing: 16) {
+            Text(lastTap)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
 
-    private var banner: some View {
-        Text(lastTap)
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-            .background(.ultraThinMaterial)
-    }
-
-    @ViewBuilder
-    private func postRow(_ post: DemoPost) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
-                Text(post.author).font(.headline)
-                Text(post.handle).font(.subheadline).foregroundStyle(.secondary)
-            }
-
-            // One ActiveText per post — markdown enabled so the last post's
-            // `[label](url)` renders nicely.
-            ActiveText(post.body)
+            ActiveText(post)
                 .detect([.url, .mention, .hashtag, .email, .phone])
                 .markdown()
                 .onMentionTap { lastTap = "Mention: @\($0)" }
@@ -54,8 +38,11 @@ struct SocialFeedExample: View {
                 .onEmailTap   { lastTap = "Email: \($0)" }
                 .onPhoneTap   { lastTap = "Phone: \($0)" }
                 .font(.body)
+
+            Spacer()
         }
-        .padding(.vertical, 4)
+        .padding()
+        .navigationTitle("Social Feed")
     }
 }
 
