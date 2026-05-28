@@ -26,6 +26,8 @@ import SwiftUI
 ///     .onURLTap     { url      in openInApp(url) }
 /// ```
 ///
+/// ![Detecting and colouring a mention](detect-mentions)
+///
 /// ### What it detects
 ///
 /// By default ActiveText looks for ``ActiveTextType/url``,

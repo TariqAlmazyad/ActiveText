@@ -17,9 +17,20 @@ extension ActiveText {
 
     /// Sets which element types to detect, in priority order.
     ///
+    /// Pick what to look for, then style each type however you like.
+    ///
     /// ```swift
-    /// ActiveText(post).detect([.url, .mention, .hashtag, .email, .phone])
+    /// ActiveText(post)
+    ///     .detect([.url, .mention, .hashtag, .email, .phone])
+    ///     .underline(.mention)
+    ///     .underline([.phone, .hashtag])
     /// ```
+    ///
+    /// ![Detecting every type with custom colours](detect-all)
+    ///
+    /// - Parameter types: The element types to scan for, highest priority first.
+    ///   When two patterns overlap, the earlier type wins.
+    /// - Returns: A copy configured to detect `types`.
     public func detect(_ types: [ActiveTextType]) -> ActiveText {
         var copy = self; copy.types = types; return copy
     }
@@ -32,12 +43,22 @@ extension ActiveText {
 
     /// Detects a custom regex pattern and routes its taps to `handler`.
     ///
+    /// Perfect for ticket IDs, SKUs, order numbers — anything with a shape.
+    ///
     /// ```swift
     /// ActiveText("See ticket TICKET-42")
     ///     .detectCustom(id: "ticket", pattern: #"TICKET-\d+"#) { value in
     ///         open(ticket: value)
     ///     }
     /// ```
+    ///
+    /// ![A custom TICKET-### pattern detected and tappable](custom-pattern)
+    ///
+    /// - Parameters:
+    ///   - id: A stable identifier for this custom type, used for styling and
+    ///     tap routing.
+    ///   - pattern: A regular expression describing the text to match.
+    ///   - handler: Called with the matched value when the element is tapped.
     public func detectCustom(
         id: String,
         pattern: String,
@@ -52,6 +73,24 @@ extension ActiveText {
     }
 
     /// Enables (or disables) Markdown inline-link parsing (`[label](url)`).
+    ///
+    /// Turns `[label](url)` syntax into a real tappable link. One modifier does
+    /// the work — the raw markdown no longer shows through.
+    ///
+    /// ```swift
+    /// ActiveText(text)
+    ///     .markdown()
+    ///     .color(.url, .blue)
+    ///     .underline(.url)
+    /// ```
+    ///
+    /// Before — raw markdown shows through:
+    ///
+    /// ![Raw markdown link syntax visible in the text](markdown-before)
+    ///
+    /// After — `.markdown()` renders a clean tappable link:
+    ///
+    /// ![A clean tappable link rendered from markdown](markdown-after)
     public func markdown(_ enabled: Bool = true) -> ActiveText {
         var copy = self; copy.markdown = enabled; return copy
     }
@@ -103,11 +142,27 @@ extension ActiveText {
     }
 
     /// Sets the foreground colour for one type.
+    ///
+    /// ```swift
+    /// ActiveText("Hello @ActiveText")
+    ///     .detect([.mention])
+    ///     .color(.mention, .pink)
+    /// ```
+    ///
+    /// ![A mention coloured pink](detect-mentions)
     public func color(_ type: ActiveTextType, _ color: Color) -> ActiveText {
         style(type) { $0.color = color }
     }
 
     /// Sets foreground colours for several types at once.
+    ///
+    /// ```swift
+    /// ActiveText(post)
+    ///     .detect([.url, .mention, .hashtag, .email])
+    ///     .colors([.mention: .pink, .hashtag: .indigo, .url: .teal, .email: .brown])
+    /// ```
+    ///
+    /// ![Each detected type painted its own colour](detect-all)
     public func colors(_ map: [ActiveTextType: Color]) -> ActiveText {
         var copy = self
         for (type, color) in map { copy.theme = copy.theme.updating(type) { $0.color = color } }
@@ -133,6 +188,19 @@ extension ActiveText {
     }
 
     /// Sets a background highlight for one type.
+    ///
+    /// Mix underlines and highlights per type for a marker-pen look.
+    ///
+    /// ```swift
+    /// ActiveText(post)
+    ///     .detect([.mention, .url, .hashtag])
+    ///     .underline(.mention)
+    ///     .highlight(.hashtag, .green.opacity(0.4))
+    ///     .highlight(.mention, .red.opacity(0.4))
+    ///     .highlight(.url, .yellow.opacity(0.4))
+    /// ```
+    ///
+    /// ![Underlines and coloured background highlights per type](underline-highlight)
     public func highlight(_ type: ActiveTextType, _ color: Color?, cornerRadius: CGFloat = 4) -> ActiveText {
         style(type) { $0.backgroundColor = color; $0.highlightCornerRadius = cornerRadius }
     }
@@ -206,6 +274,20 @@ extension ActiveText {
 
     /// A catch-all tap handler receiving the full ``ActiveTextElement`` for any
     /// interactive element without a more specific handler.
+    ///
+    /// Each type also has its own callback (see ``onTap(_:_:)``); URLs, emails
+    /// and phones additionally open automatically unless you set
+    /// ``autoOpenLinks(_:)`` to `false`.
+    ///
+    /// ```swift
+    /// ActiveText(text)
+    ///     .detect([.mention, .url, .email, .phone, .hashtag])
+    ///     .onElementTap { tapped in
+    ///         print(tapped.type, tapped.value)
+    ///     }
+    /// ```
+    ///
+    /// ![Tapping detected elements firing their handlers](tap-handlers)
     public func onElementTap(_ handler: @escaping (ActiveTextElement) -> Void) -> ActiveText {
         var copy = self; copy.interaction.anyHandler = handler; return copy
     }
@@ -255,6 +337,8 @@ extension ActiveText {
     ///         }
     ///     }
     /// ```
+    ///
+    /// ![A native long-press context menu on a detected element](context-menu)
     ///
     /// Use `if` / `switch` / `for` inside the builder just like a `ViewBuilder`.
     /// If both this and ``contextMenu(_:)`` are set, this one wins. Selecting
@@ -338,6 +422,12 @@ extension ActiveText {
     ///     .contextMenuPreview(backdrop: .blur(.regular))
     /// ```
     ///
+    /// ![Long-press preview with the rest of the screen blurred](preview-blur)
+    ///
+    /// …or dim it instead with ``ActiveTextPreviewBackdrop/dim(opacity:)``:
+    ///
+    /// ![Long-press preview with the rest of the screen dimmed](preview-dim)
+    ///
     /// Selecting this modifier forces the UIKit rendering backend.
     ///
     /// - Parameter backdrop: How the content behind the preview is treated while
@@ -403,11 +493,25 @@ extension ActiveText {
 extension ActiveText {
 
     /// Limits the number of lines (`nil` = unlimited).
+    ///
+    /// Works exactly like SwiftUI's `Text`.
+    ///
+    /// ```swift
+    /// ActiveText(text).limitLines(2)
+    /// ```
+    ///
+    /// ![Text clamped to two lines](line-limit)
     public func limitLines(_ limit: Int?) -> ActiveText {
         var copy = self; copy.lineLimit = limit; return copy
     }
 
     /// Sets the multi-line text alignment.
+    ///
+    /// ```swift
+    /// ActiveText(text).align(.center)
+    /// ```
+    ///
+    /// ![Centre-aligned multi-line text](alignment)
     public func align(_ alignment: TextAlignment) -> ActiveText {
         var copy = self; copy.alignment = alignment; return copy
     }

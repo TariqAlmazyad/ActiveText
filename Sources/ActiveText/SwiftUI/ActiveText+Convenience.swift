@@ -17,6 +17,12 @@ extension ActiveText {
 
     /// Handles taps on `@mentions`. The closure receives the username **without**
     /// the leading `@`.
+    ///
+    /// ```swift
+    /// ActiveText(post).onMentionTap { username in showProfile(username) }
+    /// ```
+    ///
+    /// ![Tapping a detected element](tap-handlers)
     public func onMentionTap(_ handler: @escaping (String) -> Void) -> ActiveText {
         onTap(.mention, handler).alsoDetect(.mention)
     }
