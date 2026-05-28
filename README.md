@@ -1,5 +1,7 @@
 # ActiveText
 
+**English** · [العربية](README.ar.md)
+
 [![CI](https://github.com/TariqAlmazyad/ActiveText/actions/workflows/ci.yml/badge.svg)](https://github.com/TariqAlmazyad/ActiveText/actions/workflows/ci.yml)
 [![Swift 6](https://img.shields.io/badge/Swift-6-orange.svg?logo=swift)](https://swift.org)
 [![Platforms](https://img.shields.io/badge/Platforms-iOS%2017%2B-blue.svg)](https://developer.apple.com/ios/)
